@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Этикетка доставки — Жизньмарт</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=PT+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --zm-green:#3F9E37;
+    --zm-green-dark:#1a4d15;
+    --zm-bg:#F1F4F3;
+    --zm-text:#0C1F1A;
+    --zm-text-secondary:#5B6765;
+    --zm-card-bg:#FFFFFF;
+    --zm-radius:20px;
+    --zm-danger:#EC6338;
+  }
+  *{box-sizing:border-box; outline:none; -webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:'PT Sans', sans-serif;
+    background:var(--zm-bg);
+    color:var(--zm-text);
+    margin:0;
+    padding:16px 16px 64px;
+  }
+  .wrap{max-width:480px; margin:0 auto;}
+
+  .header{display:flex; align-items:center; gap:8px; margin-bottom:20px; padding:0 4px;}
+  .brand{font-size:20px; font-weight:700; display:flex; align-items:center; gap:8px; color:var(--zm-green);}
+  .brand-icon{width:22px; height:22px; fill:currentColor;}
+  .header-sub{font-size:12px; color:var(--zm-text-secondary); margin-left:auto;}
+
+  .card{
+    background:var(--zm-card-bg);
+    border-radius:var(--zm-radius);
+    padding:18px;
+    margin-bottom:14px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.04);
+  }
+  .card-label{
+    font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--zm-text-secondary); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;
+  }
+  textarea{
+    width:100%; min-height:96px; resize:vertical;
+    font-family:'PT Sans', sans-serif; font-size:14.5px; line-height:1.45;
+    background:#F7F7F7; border:1px solid transparent; border-radius:12px;
+    padding:12px 14px; color:var(--zm-text);
+  }
+  textarea:focus{border-color:var(--zm-green); background:#fff;}
+
+  .btn{
+    border:none; border-radius:99px; font-family:inherit; font-weight:700; font-size:14px;
+    padding:11px 18px; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn-primary{background:var(--zm-green); color:#fff;}
+  .btn-primary:hover{background:#5CBD54;}
+  .btn-ghost{background:#F7F7F7; color:var(--zm-text);}
+  .btn-ghost:hover{background:#ECECEC;}
+  .btn-row{display:flex; gap:8px; margin-top:12px;}
+  .btn-row .btn{flex:1; justify-content:center;}
+
+  .fields{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .fields .full{grid-column:1 / -1;}
+  .field label{display:block; font-size:11px; font-weight:700; color:var(--zm-text-secondary); margin-bottom:5px; letter-spacing:.3px;}
+  .field input{
+    width:100%; font-family:'PT Sans', sans-serif; font-size:14px;
+    background:#F7F7F7; border:1px solid transparent; border-radius:10px;
+    padding:9px 11px; color:var(--zm-text);
+  }
+  .field input:focus{border-color:var(--zm-green); background:#fff;}
+
+  .tags{display:flex; flex-wrap:wrap; gap:8px;}
+  .tag-btn{
+    display:flex; align-items:center; gap:6px;
+    background:#F7F7F7; border:2px solid transparent; border-radius:99px;
+    padding:9px 14px; font-size:14px; font-weight:700; cursor:pointer; color:var(--zm-text-secondary);
+    transition:.15s; user-select:none;
+  }
+  .tag-btn .ico{font-size:16px;}
+  .tag-btn.active{border-color:var(--zm-green); background:rgba(63,158,55,0.09); color:var(--zm-green-dark);}
+
+  /* ===== Label preview (screen) ===== */
+  .preview-shell{display:flex; justify-content:center; padding:10px 0 4px;}
+  .preview-scale{
+    transform:scale(2.05);
+    transform-origin:top center;
+    margin-bottom:calc(60mm * 1.05);
+  }
+
+  .label{
+    width:58mm; height:60mm;
+    background:#fff;
+    color:#000;
+    padding:2mm 2.6mm;
+    display:flex; flex-direction:column;
+    font-family:'PT Sans', sans-serif;
+    box-shadow:0 2px 14px rgba(0,0,0,0.18);
+    border-radius:2px;
+  }
+  .l-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:2.6mm; font-weight:700; letter-spacing:.3px;
+  }
+  .l-head .eyebrow{color:#000;}
+  .l-head .store{font-family:'PT Mono', monospace; font-size:2.3mm; text-align:right; max-width:34mm;}
+
+  .l-divider{border:none; border-top:0.35mm dashed #000; margin:1mm 0; opacity:.75;}
+
+  .l-order{
+    text-align:center;
+    line-height:1;
+    margin:0.5mm 0 1mm;
+  }
+  .l-order .hash{font-size:4mm; font-weight:700; vertical-align:top; position:relative; top:1mm;}
+  .l-order .num{font-size:15mm; font-weight:700; letter-spacing:0.5mm;}
+
+  .l-tags{display:flex; justify-content:center; gap:2mm; min-height:6mm; align-items:center;}
+  .l-tag-empty{font-size:2.2mm; color:#666;}
+  .l-stamp{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    width:8.5mm; height:8.5mm; border:0.4mm solid #000; border-radius:50%;
+    transform:rotate(var(--r,0deg));
+    line-height:1;
+  }
+  .l-stamp .ico{font-size:3.6mm;}
+  .l-stamp .txt{font-size:1.5mm; font-weight:700; letter-spacing:.2mm; text-transform:uppercase; margin-top:.3mm;}
+
+  .l-row{display:flex; justify-content:space-between; align-items:baseline; font-size:2.7mm;}
+  .l-name{font-weight:700;}
+  .l-phone{font-family:'PT Mono', monospace; font-size:2.6mm;}
+
+  .l-times{display:flex; justify-content:space-between; font-size:2.4mm; font-family:'PT Mono', monospace;}
+  .l-times .t-block{text-align:left;}
+  .l-times .t-block:last-child{text-align:right;}
+  .l-times .t-label{font-family:'PT Sans', sans-serif; font-weight:700; font-size:2mm; text-transform:uppercase; letter-spacing:.3mm; color:#333; display:block;}
+
+  .l-addr{font-size:2.6mm; line-height:1.28; overflow:hidden;}
+
+  .l-bottom{display:flex; align-items:center; gap:2mm; margin-top:auto;}
+  .l-qr{width:13mm; height:13mm; flex-shrink:0;}
+  .l-qr img, .l-qr canvas{width:100%; height:100%; display:block;}
+  .l-bottom-txt{font-family:'PT Mono', monospace; font-size:2mm; line-height:1.4; color:#111;}
+
+  .hint{font-size:12.5px; color:var(--zm-text-secondary); text-align:center; margin-top:2px; line-height:1.5;}
+  .empty-msg{text-align:center; color:var(--zm-text-secondary); font-size:14px; padding:20px 8px;}
+
+  @media print{
+    body{background:#fff; padding:0; margin:0;}
+    .no-print{display:none !important;}
+    .wrap{max-width:none;}
+    .preview-shell{padding:0; justify-content:flex-start;}
+    .preview-scale{transform:none; margin:0;}
+    .label{box-shadow:none; border-radius:0; width:58mm; height:60mm;}
+  }
+  @page{ size:58mm 60mm; margin:0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header no-print">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 29 18">
+        <path d="M13.7996 15.3581C13.7996 15.3581 13.6627 15.4751 13.164 15.4751C12.6654 15.4751 12.4575 14.9641 12.3646 14.1921C12.1616 12.1388 12.0656 10.0763 12.0767 8.01307C12.0767 5.03708 11.8699 1.38107 13.8146 1.18607C13.8743 0.844493 14.0558 0.536153 14.3254 0.318253C14.595 0.100353 14.9344 -0.0123381 15.2807 0.00107286C16.5689 0.00107286 16.325 2.37707 16.329 8.01307C16.329 13.7131 15.7294 15.8621 14.864 15.8621C13.9985 15.8621 13.7996 15.3581 13.7996 15.3581Z"/>
+        <path d="M19.7143 16.0698C19.2856 15.3128 19.9532 13.5448 22.8014 10.7028C25.6495 7.86078 27.2065 6.66579 27.8981 7.53779C28.0274 7.73024 28.0988 7.9558 28.1038 8.18768C28.1088 8.41955 28.0471 8.64797 27.9261 8.84579C28.179 9.0563 28.3562 9.3437 28.4309 9.6643C28.5056 9.9849 28.4736 10.3211 28.3398 10.6218C27.9001 11.7628 25.1419 13.4928 23.8737 15.0628C22.6055 16.6328 21.6061 17.9428 20.5508 17.3238C20.4088 17.2275 20.3019 17.0877 20.2462 16.9254C20.1906 16.763 20.189 16.587 20.242 16.4238C20.0351 16.3603 19.8515 16.2372 19.7143 16.0698Z"/>
+        <path d="M0.337544 8.18523C1.87154 6.29023 4.07814 9.5852 4.07814 9.5852C4.07814 9.5852 5.56724 9.9092 7.38604 12.5852C9.20494 15.2612 8.59525 16.3032 8.59525 16.3032C8.58985 16.5064 8.53395 16.7051 8.43255 16.8812C8.33115 17.0574 8.18755 17.2055 8.01465 17.3122C7.81835 17.4175 7.59975 17.4747 7.37705 17.479C7.15435 17.4833 6.93374 17.4348 6.73344 17.3372C6.73344 17.3372 4.97055 15.7122 2.84295 13.5642C0.715245 11.4162 -0.674856 9.4352 0.337544 8.18523Z"/>
+      </svg>
+      Жизньмарт
+    </div>
+    <div class="header-sub">Этикетка доставки</div>
+  </div>
+
+  <div class="card no-print">
+    <div class="card-label">
+      <span>Текст уведомления</span>
+      <span id="pasteBtn" style="cursor:pointer; color:var(--zm-green); text-transform:none; font-weight:700;">Вставить</span>
+    </div>
+    <textarea id="rawInput" placeholder="ДОСТАВКА. ЖМ Челябинск Свердловский 88. №0796. Виктория - 89227460120. Собрать 18:43 17.08. Доставить 18:58 17.08. Челябинск, улица Воровского, 19А"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="parseAndFill()">Разобрать текст</button>
+      <button class="btn btn-ghost" onclick="clearAll()">Очистить</button>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <div class="card-label">Что в заказе</div>
+    <div class="tags" id="tagRow"></div>
+  </div>
+
+  <div class="card no-print">
+    <div class="card-label">Проверь данные</div>
+    <div class="fields">
+      <div class="field full"><label>Магазин (без города)</label><input id="f_store" oninput="render()"></div>
+      <div class="field"><label>№ заказа</label><input id="f_order" oninput="render()"></div>
+      <div class="field"><label>Телефон</label><input id="f_phone" oninput="render()"></div>
+      <div class="field"><label>Имя клиента</label><input id="f_name" oninput="render()"></div>
+      <div class="field"><label>Город (скрыт в адресе)</label><input id="f_city" oninput="render()"></div>
+      <div class="field"><label>Собрать к</label><input id="f_collect" oninput="render()"></div>
+      <div class="field"><label>Доставить к</label><input id="f_deliver" oninput="render()"></div>
+      <div class="field full"><label>Адрес доставки</label><input id="f_addr" oninput="render()"></div>
+    </div>
+  </div>
+
+  <div class="preview-shell">
+    <div class="preview-scale">
+      <div class="label" id="label">
+        <div class="l-head">
+          <span class="eyebrow">ДОСТАВКА</span>
+          <span class="store" id="l_store">—</span>
+        </div>
+        <hr class="l-divider">
+        <div class="l-order"><span class="hash">№</span><span class="num" id="l_order">0000</span></div>
+        <div class="l-tags" id="l_tags"><span class="l-tag-empty">без отметок</span></div>
+        <hr class="l-divider">
+        <div class="l-row"><span class="l-name" id="l_name">—</span><span class="l-phone" id="l_phone">—</span></div>
+        <div class="l-times" style="margin-top:1mm;">
+          <div class="t-block"><span class="t-label">Собрать</span><span id="l_collect">—</span></div>
+          <div class="t-block"><span class="t-label">Доставить</span><span id="l_deliver">—</span></div>
+        </div>
+        <hr class="l-divider">
+        <div class="l-addr" id="l_addr">—</div>
+        <div class="l-bottom">
+          <div class="l-qr" id="l_qr"></div>
+          <div class="l-bottom-txt" id="l_bottomtxt">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row no-print" style="margin-top:6px;">
+    <button class="btn btn-primary" style="flex:2;" onclick="window.print()">🖨️ Печать этикетки</button>
+  </div>
+  <div class="hint no-print">Открой эту страницу в PrintHand и распечатай — формат страницы уже задан 58×60&nbsp;мм.</div>
+
+</div>
+
+<script>
+  const state = {
+    store:'', order:'', name:'', phone:'', city:'Челябинск', collect:'', deliver:'', addr:'',
+    tags:{hot:false, frozen:false, coffee:false, pizza:false}
+  };
+
+  const TAG_DEFS = [
+    {key:'hot',    ico:'🔥', label:'Горячее'},
+    {key:'frozen', ico:'❄️', label:'Заморозка'},
+    {key:'coffee', ico:'☕', label:'Кофе'},
+    {key:'pizza',  ico:'🍕', label:'Пицца'},
+  ];
+
+  function buildTagRow(){
+    const row = document.getElementById('tagRow');
+    row.innerHTML = '';
+    TAG_DEFS.forEach(t=>{
+      const b = document.createElement('div');
+      b.className = 'tag-btn' + (state.tags[t.key] ? ' active' : '');
+      b.innerHTML = `<span class="ico">${t.ico}</span><span>${t.label}</span>`;
+      b.onclick = ()=>{ state.tags[t.key] = !state.tags[t.key]; buildTagRow(); render(); };
+      row.appendChild(b);
+    });
+  }
+
+  function stripCity(str, city){
+    if(!str) return str;
+    if(!city) return str.trim();
+    const re = new RegExp('^\\s*'+city.trim()+'\\s*,?\\s*', 'i');
+    return str.replace(re,'').trim();
+  }
+
+  function parseAndFill(){
+    const text = document.getElementById('rawInput').value.trim();
+    if(!text) return;
+
+    let store='', order='', name='', phone='', city='Челябинск', collect='', deliver='', addr='';
+
+    // Магазин + город: "ЖМ Челябинск Свердловский 88."
+    const storeM = text.match(/ЖМ\s+([А-ЯЁ][а-яё]+)\s+(.+?)\.\s*№/);
+    if(storeM){
+      city = storeM[1].trim();
+      store = storeM[2].trim();
+    } else {
+      const storeM2 = text.match(/ЖМ\s+(.+?)\.\s*№/);
+      if(storeM2) store = storeM2[1].trim();
+    }
+
+    const orderM = text.match(/№\s*([^\s.]+)/);
+    if(orderM) order = orderM[1].trim();
+
+    const nameM = text.match(/([А-ЯЁ][а-яА-ЯёЁ]+)\s*-\s*(\+?\d[\d\-\s()]{7,}\d)/);
+    if(nameM){ name = nameM[1].trim(); phone = nameM[2].replace(/[\s()\-]/g,''); }
+
+    const collectM = text.match(/Собрать\s+([\d:]{3,5})\s+([\d.]{4,5})/);
+    if(collectM) collect = collectM[1]+' '+collectM[2];
+
+    const deliverM = text.match(/Доставить\s+([\d:]{3,5})\s+([\d.]{4,5})/i);
+    if(deliverM) deliver = deliverM[1]+' '+deliverM[2];
+
+    if(deliverM){
+      const tail = text.slice(text.indexOf(deliverM[0]) + deliverM[0].length);
+      addr = tail.replace(/^[.\s]+/, '').trim();
+    }
+    addr = stripCity(addr, city);
+
+    state.store = store; state.order = order; state.name = name; state.phone = phone;
+    state.city = city; state.collect = collect; state.deliver = deliver; state.addr = addr;
+
+    document.getElementById('f_store').value = store;
+    document.getElementById('f_order').value = order;
+    document.getElementById('f_name').value = name;
+    document.getElementById('f_phone').value = phone;
+    document.getElementById('f_city').value = city;
+    document.getElementById('f_collect').value = collect;
+    document.getElementById('f_deliver').value = deliver;
+    document.getElementById('f_addr').value = addr;
+
+    render();
+  }
+
+  function clearAll(){
+    document.getElementById('rawInput').value='';
+    ['f_store','f_order','f_name','f_phone','f_collect','f_deliver','f_addr'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f_city').value = 'Челябинск';
+    TAG_DEFS.forEach(t=>state.tags[t.key]=false);
+    buildTagRow();
+    render();
+  }
+
+  let qrObj = null;
+  function render(){
+    const store = document.getElementById('f_store').value.trim();
+    const order = document.getElementById('f_order').value.trim();
+    const name = document.getElementById('f_name').value.trim();
+    const phone = document.getElementById('f_phone').value.trim();
+    const city = document.getElementById('f_city').value.trim();
+    const collect = document.getElementById('f_collect').value.trim();
+    const deliver = document.getElementById('f_deliver').value.trim();
+    const addr = document.getElementById('f_addr').value.trim();
+
+    document.getElementById('l_store').textContent = store || '—';
+    document.getElementById('l_order').textContent = order || '0000';
+    document.getElementById('l_name').textContent = name || '—';
+    document.getElementById('l_phone').textContent = phone || '—';
+    document.getElementById('l_collect').textContent = collect || '—';
+    document.getElementById('l_deliver').textContent = deliver || '—';
+    document.getElementById('l_addr').textContent = addr || '—';
+    document.getElementById('l_bottomtxt').innerHTML = `№${order||'0000'}<br>${phone||''}`;
+
+    const rotations = [-6, 4, -3, 6];
+    const active = TAG_DEFS.filter(t=>state.tags[t.key]);
+    const tagsEl = document.getElementById('l_tags');
+    if(active.length===0){
+      tagsEl.innerHTML = '<span class="l-tag-empty">без отметок</span>';
+    } else {
+      tagsEl.innerHTML = active.map((t,i)=>`
+        <div class="l-stamp" style="--r:${rotations[i%rotations.length]}deg;">
+          <span class="ico">${t.ico}</span>
+          <span class="txt">${t.label}</span>
+        </div>`).join('');
+    }
+
+    const qrEl = document.getElementById('l_qr');
+    qrEl.innerHTML = '';
+    const qrData = `ЖМ ${store}\n№${order}\n${name} ${phone}\n${addr}\nСобрать ${collect}\nДоставить ${deliver}`;
+    try{
+      new QRCode(qrEl, { text:qrData, width:200, height:200, correctLevel: QRCode.CorrectLevel.M });
+    }catch(e){}
+  }
+
+  document.getElementById('pasteBtn').addEventListener('click', async ()=>{
+    try{
+      const t = await navigator.clipboard.readText();
+      if(t){ document.getElementById('rawInput').value = t; parseAndFill(); }
+    }catch(e){ /* clipboard недоступен — игнорируем */ }
+  });
+
+  document.getElementById('f_city').addEventListener('input', ()=>{
+    document.getElementById('f_addr').value = stripCity(document.getElementById('f_addr').value, document.getElementById('f_city').value);
+    render();
+  });
+
+  // Демонстрационные данные при первом открытии
+  document.getElementById('rawInput').value = 'ДОСТАВКА. ЖМ Челябинск Свердловский 88. №0796. Виктория - 89227460120. Собрать 18:43 17.08. Доставить 18:58 17.08. Челябинск, улица Воровского, 19А';
+  buildTagRow();
+  parseAndFill();
+</script>
+</body>
+</html>
