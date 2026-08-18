@@ -172,7 +172,7 @@
 
   <div class="card no-print">
     <div class="card-label">Текст уведомления</div>
-    <textarea id="rawInput" placeholder="ДОСТАВКА. ЖМ Челябинск Свердловский 88. №0000. Гость - 89999999999. Собрать 12:00 01.03. Доставить 12:20 01.03. Челябинск, улица Воровского, 19А"></textarea>
+    <textarea id="rawInput" placeholder="ДОСТАВКА. ЖМ Челябинск Свердловский 88. №0796. Виктория - 89227460120. Собрать 18:43 17.08. Доставить 18:58 17.08. Челябинск, улица Воровского, 19А"></textarea>
     <div class="btn-row">
       <button class="btn btn-primary" id="pasteBtn">📋 Вставить</button>
       <button class="btn btn-ghost" onclick="clearAll()">Очистить</button>
@@ -200,6 +200,14 @@
     </div>
   </div>
 
+  <div class="btn-row no-print" style="margin-top:6px;">
+    <button class="btn btn-primary" style="flex:2;" onclick="printLabels()">🖨️ Печать этикеток</button>
+  </div>
+  <div class="hint no-print">Открой эту страницу в PrintHand и распечатай — формат страницы уже задан 58×60&nbsp;мм.</div>
+
+  <div id="printBatch"></div>
+</div>
+
 <script>
   const LOGO_SVG = `<svg class="l-logo" viewBox="0 0 29 18" xmlns="http://www.w3.org/2000/svg">
     <path d="M13.7996 15.3581C13.7996 15.3581 13.6627 15.4751 13.164 15.4751C12.6654 15.4751 12.4575 14.9641 12.3646 14.1921C12.1616 12.1388 12.0656 10.0763 12.0767 8.01307C12.0767 5.03708 11.8699 1.38107 13.8146 1.18607C13.8743 0.844493 14.0558 0.536153 14.3254 0.318253C14.595 0.100353 14.9344 -0.0123381 15.2807 0.00107286C16.5689 0.00107286 16.325 2.37707 16.329 8.01307C16.329 13.7131 15.7294 15.8621 14.864 15.8621C13.9985 15.8621 13.7996 15.3581 13.7996 15.3581Z"/>
@@ -212,8 +220,8 @@
     <path d="M4 21c0-4.4 3.58-8 8-8s8 3.6 8 8"></path>
   </svg>`;
 
-  const NICK_ADJ = ['Весёлый','Смелый','Благородный','Счастливый','Шустрый','Добрый','Могучий','Радостный','Умный','Бесстрашный','Дружелюбный','Отважный','Сияющий','Задорный'];
-  const NICK_NOUN = ['Енот','Онигири','Пельмень','Банан','Огурец','Авокадо','Хомяк','Дракон','Осьминог','Кабачок','Ёжик','Йети','Барсук','Мандарин','Краб'];
+  const NICK_ADJ = ['Весёлый','Смелый','Солнечный','Счастливый','Шустрый','Добрый','Могучий','Радостный','Умный','Бесстрашный','Дружелюбный','Отважный','Сияющий','Задорный'];
+  const NICK_NOUN = ['Енот','Бегемот','Пельмень','Носорог','Огурец','Авокадо','Хомяк','Дракон','Осьминог','Кабачок','Ёжик','Йети','Барсук','Мандарин','Краб'];
 
   function hashStr(s){
     let h = 0;
@@ -388,16 +396,14 @@
     `;
   }
 
-  function toUtf8Bytes(str){
-  return unescape(encodeURIComponent(str));
-}
-
   function renderQR(container, idx, total){
     container.innerHTML = '';
     const data = {
       order: state.order || '',
       store: `ЖМ ${state.store||''}`,
       nickname: nicknameFor(state.order),
+      name: state.name || '',
+      phone: formatPhone(state.phone) || '',
       address: state.addr || '',
       deliver_by: state.deliver || '',
       items: buildTagsText(),
@@ -406,7 +412,7 @@
     const text = JSON.stringify(data);
     try{
       const qr = qrcode(0, 'M');
-      qr.addData(toUtf8Bytes(text));
+      qr.addData(text);
       qr.make();
       container.innerHTML = qr.createSvgTag({scalable:true});
     }catch(e){
@@ -465,7 +471,14 @@
   window.addEventListener('resize', fitPreview);
 
   buildTagRow();
-  render();
+  const urlParams = new URLSearchParams(window.location.search);
+  const presetText = urlParams.get('text');
+  if(presetText){
+    document.getElementById('rawInput').value = presetText;
+    parseAndFill();
+  } else {
+    render();
+  }
 </script>
 </body>
 </html>
