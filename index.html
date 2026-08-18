@@ -130,8 +130,8 @@
 
   .l-bottom{display:flex; align-items:flex-end; gap:2mm;}
   .l-info{flex:1; min-width:0;}
-  .l-name{font-size:3.2mm; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .l-phone{font-size:2.9mm; font-weight:400; margin-top:0.3mm;}
+  .l-nickname{display:flex; align-items:center; gap:1.1mm; font-size:3.1mm; font-weight:700;}
+  .l-person{width:3mm; height:3mm; flex-shrink:0;}
   .l-deliver{margin-top:1.3mm; font-size:3mm; display:flex; flex-wrap:wrap; align-items:baseline; gap:1.2mm;}
   .l-deliver .lbl{font-weight:700; text-transform:uppercase; font-size:2.2mm; letter-spacing:.2mm;}
   .l-deliver .val{font-weight:700; font-size:3.3mm;}
@@ -172,7 +172,7 @@
 
   <div class="card no-print">
     <div class="card-label">Текст уведомления</div>
-    <textarea id="rawInput" placeholder="ДОСТАВКА. ЖМ Челябинск Свердловский 88. №0796. Виктория - 89227460120. Собрать 18:43 17.08. Доставить 18:58 17.08. Челябинск, улица Воровского, 19А"></textarea>
+    <textarea id="rawInput" placeholder="ДОСТАВКА. ЖМ Челябинск Свердловский 88. №0000. Гость - 89999999999. Собрать 12:00 01.03. Доставить 12:20 01.03. Челябинск, улица Воровского, 19А"></textarea>
     <div class="btn-row">
       <button class="btn btn-primary" id="pasteBtn">📋 Вставить</button>
       <button class="btn btn-ghost" onclick="clearAll()">Очистить</button>
@@ -200,20 +200,33 @@
     </div>
   </div>
 
-  <div class="btn-row no-print" style="margin-top:6px;">
-    <button class="btn btn-primary" style="flex:2;" onclick="printLabels()">🖨️ Печать этикеток</button>
-  </div>
-  <div class="hint no-print">Открой эту страницу в PrintHand и распечатай — формат страницы уже задан 58×60&nbsp;мм.</div>
-
-  <div id="printBatch"></div>
-</div>
-
 <script>
   const LOGO_SVG = `<svg class="l-logo" viewBox="0 0 29 18" xmlns="http://www.w3.org/2000/svg">
     <path d="M13.7996 15.3581C13.7996 15.3581 13.6627 15.4751 13.164 15.4751C12.6654 15.4751 12.4575 14.9641 12.3646 14.1921C12.1616 12.1388 12.0656 10.0763 12.0767 8.01307C12.0767 5.03708 11.8699 1.38107 13.8146 1.18607C13.8743 0.844493 14.0558 0.536153 14.3254 0.318253C14.595 0.100353 14.9344 -0.0123381 15.2807 0.00107286C16.5689 0.00107286 16.325 2.37707 16.329 8.01307C16.329 13.7131 15.7294 15.8621 14.864 15.8621C13.9985 15.8621 13.7996 15.3581 13.7996 15.3581Z"/>
     <path d="M19.7143 16.0698C19.2856 15.3128 19.9532 13.5448 22.8014 10.7028C25.6495 7.86078 27.2065 6.66579 27.8981 7.53779C28.0274 7.73024 28.0988 7.9558 28.1038 8.18768C28.1088 8.41955 28.0471 8.64797 27.9261 8.84579C28.179 9.0563 28.3562 9.3437 28.4309 9.6643C28.5056 9.9849 28.4736 10.3211 28.3398 10.6218C27.9001 11.7628 25.1419 13.4928 23.8737 15.0628C22.6055 16.6328 21.6061 17.9428 20.5508 17.3238C20.4088 17.2275 20.3019 17.0877 20.2462 16.9254C20.1906 16.763 20.189 16.587 20.242 16.4238C20.0351 16.3603 19.8515 16.2372 19.7143 16.0698Z"/>
     <path d="M0.337544 8.18523C1.87154 6.29023 4.07814 9.5852 4.07814 9.5852C4.07814 9.5852 5.56724 9.9092 7.38604 12.5852C9.20494 15.2612 8.59525 16.3032 8.59525 16.3032C8.58985 16.5064 8.53395 16.7051 8.43255 16.8812C8.33115 17.0574 8.18755 17.2055 8.01465 17.3122C7.81835 17.4175 7.59975 17.4747 7.37705 17.479C7.15435 17.4833 6.93374 17.4348 6.73344 17.3372C6.73344 17.3372 4.97055 15.7122 2.84295 13.5642C0.715245 11.4162 -0.674856 9.4352 0.337544 8.18523Z"/>
   </svg>`;
+
+  const PERSON_SVG = `<svg class="l-person" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="7.5" r="4"></circle>
+    <path d="M4 21c0-4.4 3.58-8 8-8s8 3.6 8 8"></path>
+  </svg>`;
+
+  const NICK_ADJ = ['Весёлый','Смелый','Благородный','Счастливый','Шустрый','Добрый','Могучий','Радостный','Умный','Бесстрашный','Дружелюбный','Отважный','Сияющий','Задорный'];
+  const NICK_NOUN = ['Енот','Онигири','Пельмень','Банан','Огурец','Авокадо','Хомяк','Дракон','Осьминог','Кабачок','Ёжик','Йети','Барсук','Мандарин','Краб'];
+
+  function hashStr(s){
+    let h = 0;
+    for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+    return h;
+  }
+  function nicknameFor(order){
+    if(!order) return 'Гость Магазина';
+    const h = hashStr(String(order));
+    const adj = NICK_ADJ[h % NICK_ADJ.length];
+    const noun = NICK_NOUN[Math.floor(h / NICK_ADJ.length) % NICK_NOUN.length];
+    return `${adj} ${noun}`;
+  }
 
   const state = {
     store:'', order:'', name:'', phone:'', city:'Челябинск', deliver:'', addr:'',
@@ -303,11 +316,14 @@
       if(storeM2) store = storeM2[1].trim();
     }
 
-    const orderM = text.match(/№\s*(\d+)/);
-    if(orderM) order = orderM[1].replace(/\D/g,'');
+    const orderM = text.match(/№\s*([^\s.]+)/);
+    if(orderM) order = orderM[1].replace(/[.,]+$/, '').trim();
 
-    const nameM = text.match(/([А-ЯЁ][а-яА-ЯёЁ]+)\s*-\s*(\+?\d[\d\-\s()]{7,}\d)/);
-    if(nameM){ name = nameM[1].trim(); phone = nameM[2].replace(/[\s()\-]/g,''); }
+    if(orderM){
+      const afterOrder = text.slice(text.indexOf(orderM[0]) + orderM[0].length);
+      const nameM = afterOrder.match(/\.\s*(.+?)\s*-\s*(\+?\d[\d\-\s()]{7,}\d)/);
+      if(nameM){ name = nameM[1].trim(); phone = nameM[2].replace(/[\s()\-]/g,''); }
+    }
 
     const deliverM = text.match(/Доставить\s+([\d:]{3,5})\s+([\d.]{4,5})/i);
     if(deliverM) deliver = deliverM[1]+' '+deliverM[2];
@@ -363,8 +379,7 @@
       ${showPkg ? `<div class="l-pkg-wrap"><span class="l-pill pkg-pill">Пакетов ${idx}/${total}</span></div>` : ''}
       <div class="l-bottom">
         <div class="l-info">
-          <div class="l-name">${name}</div>
-          <div class="l-phone">${phone}</div>
+          <div class="l-nickname">${PERSON_SVG}<span>${nicknameFor(state.order)}</span></div>
           <div class="l-deliver"><span class="lbl">Доставить до</span><span class="val">${deliver.split(' ')[0]||deliver}</span></div>
           <div class="l-addr">${addr}</div>
         </div>
@@ -373,13 +388,16 @@
     `;
   }
 
+  function toUtf8Bytes(str){
+  return unescape(encodeURIComponent(str));
+}
+
   function renderQR(container, idx, total){
     container.innerHTML = '';
     const data = {
       order: state.order || '',
       store: `ЖМ ${state.store||''}`,
-      name: state.name || '',
-      phone: formatPhone(state.phone) || '',
+      nickname: nicknameFor(state.order),
       address: state.addr || '',
       deliver_by: state.deliver || '',
       items: buildTagsText(),
@@ -388,7 +406,7 @@
     const text = JSON.stringify(data);
     try{
       const qr = qrcode(0, 'M');
-      qr.addData(text);
+      qr.addData(toUtf8Bytes(text));
       qr.make();
       container.innerHTML = qr.createSvgTag({scalable:true});
     }catch(e){
@@ -446,10 +464,8 @@
 
   window.addEventListener('resize', fitPreview);
 
-  // Демонстрационные данные при первом открытии
-  document.getElementById('rawInput').value = 'ДОСТАВКА. ЖМ Челябинск Свердловский 88. №0796. Виктория - 89227460120. Собрать 18:43 17.08. Доставить 18:58 17.08. Челябинск, улица Воровского, 19А';
   buildTagRow();
-  parseAndFill();
+  render();
 </script>
 </body>
 </html>
