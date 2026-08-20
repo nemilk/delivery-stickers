@@ -112,21 +112,17 @@
   .l-head-left{display:flex; align-items:center; gap:1.3mm; min-width:0;}
   .l-logo{width:4.4mm; height:2.8mm; fill:#000; flex-shrink:0;}
   .l-store{font-size:2.8mm; font-weight:700; letter-spacing:.1mm; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .l-pill{
-    display:inline-flex; align-items:center; justify-content:center;
-    background:#000; color:#fff; font-weight:700; white-space:nowrap; border-radius:99px; flex-shrink:0;
-  }
-  .l-pill.head-pill{font-size:2.3mm; padding:0.9mm 2.6mm;}
+  .l-type{font-size:2.4mm; font-weight:700; text-transform:uppercase; letter-spacing:.3mm; flex-shrink:0;}
 
   .l-order{text-align:center; line-height:1;}
   .l-order .hash{font-size:3.8mm; font-weight:700; vertical-align:top; position:relative; top:0.9mm; margin-right:0.3mm;}
   .l-order .num{font-size:14mm; font-weight:700; letter-spacing:0.3mm;}
 
-  .l-tags{font-size:2.6mm; font-weight:400; text-align:center; line-height:1.35; color:#000;}
+  .l-tags{font-size:3.3mm; font-weight:700; text-align:center; line-height:1.35; color:#000;}
   .l-tags:empty{display:none;}
 
   .l-pkg-wrap{display:flex; justify-content:center;}
-  .l-pill.pkg-pill{font-size:2.6mm; padding:1mm 3.4mm;}
+  .l-pkg{font-size:2.6mm; font-weight:700; text-transform:uppercase; letter-spacing:.2mm;}
 
   .l-bottom{display:flex; align-items:flex-end; gap:2mm;}
   .l-info{flex:1; min-width:0;}
@@ -172,7 +168,7 @@
 
   <div class="card no-print">
     <div class="card-label">Текст уведомления</div>
-    <textarea id="rawInput" placeholder="ДОСТАВКА. ЖМ Челябинск Свердловский 88. №0796. Виктория - 89227460120. Собрать 18:43 17.08. Доставить 18:58 17.08. Челябинск, улица Воровского, 19А"></textarea>
+    <textarea id="rawInput"></textarea>
     <div class="btn-row">
       <button class="btn btn-primary" id="pasteBtn">📋 Вставить</button>
       <button class="btn btn-ghost" onclick="clearAll()">Очистить</button>
@@ -203,7 +199,6 @@
   <div class="btn-row no-print" style="margin-top:6px;">
     <button class="btn btn-primary" style="flex:2;" onclick="printLabels()">🖨️ Печать этикеток</button>
   </div>
-  <div class="hint no-print">Открой эту страницу в PrintHand и распечатай — формат страницы уже задан 58×60&nbsp;мм.</div>
 
   <div id="printBatch"></div>
 </div>
@@ -220,8 +215,8 @@
     <path d="M4 21c0-4.4 3.58-8 8-8s8 3.6 8 8"></path>
   </svg>`;
 
-  const NICK_ADJ = ['Весёлый','Смелый','Солнечный','Счастливый','Шустрый','Добрый','Могучий','Радостный','Умный','Бесстрашный','Дружелюбный','Отважный','Сияющий','Задорный'];
-  const NICK_NOUN = ['Енот','Бегемот','Пельмень','Носорог','Огурец','Авокадо','Хомяк','Дракон','Осьминог','Кабачок','Ёжик','Йети','Барсук','Мандарин','Краб'];
+  const NICK_ADJ = ['Весёлый','Смелый','Счастливый','Шустрый','Добрый','Могучий','Радостный','Умный','Бесстрашный','Дружелюбный','Отважный','Сияющий','Задорный'];
+  const NICK_NOUN = ['Енот','Пельмень','Огурец','Авокадо','Дракон','Осьминог','Кабачок','Ёжик','Йети','Мандарин','Буйвол','Онигири'];
 
   function hashStr(s){
     let h = 0;
@@ -237,8 +232,8 @@
   }
 
   const state = {
-    store:'', order:'', name:'', phone:'', city:'Челябинск', deliver:'', addr:'',
-    tags:{hot:false, frozen:false, pizza:false},
+    store:'', order:'', name:'', phone:'', city:'Челябинск', deliver:'', addr:'', orderType:'delivery', typeLabel:'Доставка',
+    tags:{hot:false, frozen:false, pizza:false, water:false, door:false},
     drinks:0,
     qty:1
   };
@@ -247,6 +242,8 @@
     {key:'hot',    ico:'🔥', label:'Горячее'},
     {key:'frozen', ico:'❄️', label:'Заморозка'},
     {key:'pizza',  ico:'🍕', label:'Пицца'},
+    {key:'water',  ico:'💧', label:'Вода'},
+    {key:'door',   ico:'🚪', label:'Оставить у двери'},
   ];
 
   function pluralize(n, forms){
@@ -313,7 +310,20 @@
     const text = document.getElementById('rawInput').value.trim();
     if(!text) return;
 
-    let store='', order='', name='', phone='', city='Челябинск', deliver='', addr='';
+    let store='', order='', name='', phone='', city='Челябинск', deliver='', addr='', orderType='delivery', typeLabel='Доставка';
+
+    const TYPE_MAP = [
+      {match:'САМОВЫВОЗ',   category:'pickup',     label:'Самовывоз'},
+      {match:'НА АВТО',     category:'pickup',     label:'На авто'},
+      {match:'С КОЛЯСКОЙ',  category:'pickup',     label:'С коляской'},
+      {match:'АГРЕГАТОР',   category:'aggregator', label:'Агрегатор'},
+    ];
+    const typeM = text.match(/^\s*([^.]+)\./);
+    if(typeM){
+      const t = typeM[1].trim().toUpperCase();
+      const found = TYPE_MAP.find(m=>t.includes(m.match));
+      if(found){ orderType = found.category; typeLabel = found.label; }
+    }
 
     const storeM = text.match(/ЖМ\s+([А-ЯЁ][а-яё]+)\s+(.+?)\.\s*№/);
     if(storeM){
@@ -346,14 +356,14 @@
     addr = stripCity(addr, city);
 
     state.store = store; state.order = order; state.name = name; state.phone = phone;
-    state.city = city; state.deliver = deliver; state.addr = addr;
+    state.city = city; state.deliver = deliver; state.addr = addr; state.orderType = orderType; state.typeLabel = typeLabel;
 
     render();
   }
 
   function clearAll(){
     document.getElementById('rawInput').value='';
-    Object.assign(state, {store:'', order:'', name:'', phone:'', deliver:'', addr:'', drinks:0});
+    Object.assign(state, {store:'', order:'', name:'', phone:'', deliver:'', addr:'', drinks:0, orderType:'delivery', typeLabel:'Доставка'});
     TAG_DEFS.forEach(t=>state.tags[t.key]=false);
     buildTagRow();
     render();
@@ -362,7 +372,7 @@
   function buildTagsText(){
     const active = TAG_DEFS.filter(t=>state.tags[t.key]).map(t=>t.label);
     if(state.drinks>0){
-      active.push(`${state.drinks} ${pluralize(state.drinks, ['напиток','напитка','напитков'])}`);
+      active.push(`${state.drinks}&nbsp;${pluralize(state.drinks, ['напиток','напитка','напитков'])}`);
     }
     return active.join(' · ');
   }
@@ -370,49 +380,48 @@
   function buildLabelHTML(idx, total){
     const store = state.store || '—';
     const order = state.order || '0000';
-    const name = state.name || '—';
-    const phone = formatPhone(state.phone) || '—';
-    const deliver = state.deliver || '—';
-    const addr = state.addr || '—';
+    const deliverTime = state.deliver ? (state.deliver.split(' ')[0]||state.deliver) : '—';
     const tagsText = buildTagsText();
     const showPkg = total > 1;
+    const typeLabel = state.typeLabel || 'Доставка';
+
+    let addrDisplay = state.addr;
+    if(!addrDisplay){
+      if(state.orderType==='pickup') addrDisplay = 'Самовывоз из магазина';
+      else if(state.orderType==='aggregator') addrDisplay = 'Заказ агрегатора';
+      else addrDisplay = '—';
+    }
+    const deliverDisplay = state.orderType==='aggregator' ? '—' : deliverTime;
 
     return `
       <div class="l-head">
         <div class="l-head-left">${LOGO_SVG}<span class="l-store">ЖМ ${store}</span></div>
-        <span class="l-pill head-pill">Доставка</span>
+        <span class="l-type">${typeLabel}</span>
       </div>
       <div class="l-order"><span class="hash">№</span><span class="num">${order}</span></div>
       <div class="l-tags">${tagsText}</div>
-      ${showPkg ? `<div class="l-pkg-wrap"><span class="l-pill pkg-pill">Пакетов ${idx}/${total}</span></div>` : ''}
+      ${showPkg ? `<div class="l-pkg-wrap"><span class="l-pkg">Пакетов ${idx}/${total}</span></div>` : ''}
       <div class="l-bottom">
         <div class="l-info">
           <div class="l-nickname">${PERSON_SVG}<span>${nicknameFor(state.order)}</span></div>
-          <div class="l-deliver"><span class="lbl">Доставить до</span><span class="val">${deliver.split(' ')[0]||deliver}</span></div>
-          <div class="l-addr">${addr}</div>
+          <div class="l-deliver"><span class="lbl">Доставить до</span><span class="val">${deliverDisplay}</span></div>
+          <div class="l-addr">${addrDisplay}</div>
         </div>
         <div class="l-qr"></div>
       </div>
     `;
   }
 
-  function renderQR(container, idx, total){
+  function toUtf8Bytes(str){
+    return unescape(encodeURIComponent(str));
+  }
+
+  function renderQR(container){
     container.innerHTML = '';
-    const data = {
-      order: state.order || '',
-      store: `ЖМ ${state.store||''}`,
-      nickname: nicknameFor(state.order),
-      name: state.name || '',
-      phone: formatPhone(state.phone) || '',
-      address: state.addr || '',
-      deliver_by: state.deliver || '',
-      items: buildTagsText(),
-      package: `${idx}/${total}`
-    };
-    const text = JSON.stringify(data);
+    const text = `Желаем хорошего дня от команды ЖМ ${state.store||''} :) Спасибо за заказ!`;
     try{
-      const qr = qrcode(0, 'M');
-      qr.addData(text);
+      const qr = qrcode(0, 'L');
+      qr.addData(toUtf8Bytes(text));
       qr.make();
       container.innerHTML = qr.createSvgTag({scalable:true});
     }catch(e){
@@ -423,7 +432,7 @@
   function render(){
     const label = document.getElementById('label');
     label.innerHTML = buildLabelHTML(1, state.qty);
-    renderQR(label.querySelector('.l-qr'), 1, state.qty);
+    renderQR(label.querySelector('.l-qr'));
     fitPreview();
   }
 
@@ -449,7 +458,7 @@
       const div = document.createElement('div');
       div.className = 'label';
       div.innerHTML = buildLabelHTML(i, state.qty);
-      renderQR(div.querySelector('.l-qr'), i, state.qty);
+      renderQR(div.querySelector('.l-qr'));
       batch.appendChild(div);
     }
     window.print();
